@@ -99,7 +99,8 @@ with Logging
     cmd: UserCommand
   )(
     implicit ec: ExecutionContext
-  ): Future[Either[NonEmptyList[String],UserEvent]] = {
+  ): Future[ErrorsOr[UserEvent]] = {
+//  ): Future[Either[NonEmptyList[String],UserEvent]] = {
 
     import cats.implicits._
     import UserCommand._
@@ -266,7 +267,8 @@ with Logging
     cmd: SessionCommand
   )(
     implicit ec: ExecutionContext
-  ): Future[Either[NonEmptyList[String],SessionEvent]] = {
+  ): Future[ErrorsOr[SessionEvent]] = {
+//  ): Future[Either[NonEmptyList[String],SessionEvent]] = {
 
     import SessionCommand._
     import SessionEvent._
@@ -352,7 +354,7 @@ with Logging
       //-----------------------------------------------------------------------
       case Logout(username) => {
 
-        Future.successful(LoggedOut.asRight[NonEmptyList[String]])
+        Future.successful(LoggedOut().asRight[NonEmptyList[String]])
           .andThen {
             case Success(_) => 
               for {

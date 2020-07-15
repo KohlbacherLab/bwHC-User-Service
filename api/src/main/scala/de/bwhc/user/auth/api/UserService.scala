@@ -21,12 +21,19 @@ import de.bwhc.util.oauth.AccessToken
 trait UserService
 {
 
+  type Or[+A,+B] = Either[A,B]
+
+  type Errors = NonEmptyList[String]
+
+  type ErrorsOr[+T] = Errors Or T
+
+
   def process(
     cmd: UserCommand
   )(
     implicit ec: ExecutionContext
-  ): Future[Either[NonEmptyList[String],UserEvent]]
-//  ): Future[Either[NonEmptyList[String],User]]
+  ): Future[ErrorsOr[UserEvent]]
+//  ): Future[Either[NonEmptyList[String],UserEvent]]
 
   def !(cmd: UserCommand)(implicit ec: ExecutionContext) = process(cmd)
 
@@ -43,7 +50,8 @@ trait UserService
     cmd: SessionCommand
   )(
     implicit ec: ExecutionContext
-  ): Future[Either[NonEmptyList[String],SessionEvent]]
+  ): Future[ErrorsOr[SessionEvent]]
+//  ): Future[Either[NonEmptyList[String],SessionEvent]]
 
   def !(cmd: SessionCommand)(implicit ec: ExecutionContext) = process(cmd)
 

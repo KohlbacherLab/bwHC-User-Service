@@ -6,6 +6,8 @@ import java.time.{LocalDate,Instant}
 
 import play.api.libs.json.Json
 
+//import de.bwhc.util.ddd._
+import de.bwhc.util.ddd.Event
 
 
 object User
@@ -25,8 +27,7 @@ object User
   implicit val formatId       = Json.valueFormat[Id] 
   implicit val formatName     = Json.valueFormat[Name] 
   implicit val formatPassword = Json.valueFormat[Password] 
-
-  implicit val format = Json.format[User]
+  implicit val format         = Json.format[User]
 
 }
 
@@ -83,10 +84,7 @@ object UserCommand
 }
 
 
-sealed abstract class UserEvent
-{
-  val timestamp: Instant
-}
+sealed abstract class UserEvent extends Event
 object UserEvent
 {
 
@@ -113,5 +111,3 @@ object UserEvent
   implicit val formatDeleted = Json.format[Deleted]
 
 }
-
-

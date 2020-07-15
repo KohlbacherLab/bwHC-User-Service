@@ -13,6 +13,7 @@ import scala.concurrent.{
 import play.api.libs.json.Json
 import cats.data.NonEmptyList
 
+import de.bwhc.util.ddd.Event
 import de.bwhc.util.oauth._
 
 
@@ -48,7 +49,7 @@ object UserWithRoles
 }
 
 
-sealed abstract class SessionEvent
+sealed abstract class SessionEvent extends Event 
 object SessionEvent
 {
 
@@ -56,9 +57,12 @@ object SessionEvent
   (
     user: UserWithRoles,
     token: OAuthToken,
+    timestamp: Instant = Instant.now
   ) extends SessionEvent
 
-  final case object LoggedOut extends SessionEvent
+  final case class LoggedOut(
+    timestamp: Instant = Instant.now
+  ) extends SessionEvent
 
 }
 
