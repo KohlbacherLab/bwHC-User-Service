@@ -29,11 +29,14 @@ class Tests extends AsyncFlatSpec
 
   }
 
+  import UserCommand._
+  import UserEvent._
+
  
   val create =
-    UserCommand.Create(
+    Create(
       User.Name("test_user"),
-      User.Password("changeit"),
+      User.Password("""C|-|AnGe$1T"""),
       HumanName(
         HumanName.Given("Ute"),
         HumanName.Family("Musterfrau")
@@ -50,10 +53,19 @@ class Tests extends AsyncFlatSpec
     for {
       result   <- userService ! create
       createOk =  result.isRight mustBe true      
-      newUser  =  result.toOption.get
+      Created(newUser,_) = result.toOption.get
       user     <- userService.get(newUser.id)
       fetchOk  =  user mustBe defined
       ok       =  user.value mustBe newUser  
+    } yield ok
+
+  }
+
+  "Duplicate User creation" must "NOT work" in {
+
+    for {
+      result <- userService ! create
+      ok     =  result.isLeft mustBe true      
     } yield ok
 
   }
@@ -84,6 +96,7 @@ class Tests extends AsyncFlatSpec
 
   }
 
+  
 
 
 }

@@ -83,4 +83,35 @@ object UserCommand
 }
 
 
+sealed abstract class UserEvent
+{
+  val timestamp: Instant
+}
+object UserEvent
+{
+
+  final case class Created
+  (
+    user: User,
+    timestamp: Instant = Instant.now
+  ) extends UserEvent
+
+  final case class Updated
+  (
+    user: User,
+    timestamp: Instant = Instant.now
+  ) extends UserEvent
+
+  final case class Deleted
+  (
+    id: User.Id,
+    timestamp: Instant = Instant.now
+  ) extends UserEvent
+
+  implicit val formatCreated = Json.format[Created]
+  implicit val formatUpdated = Json.format[Updated]
+  implicit val formatDeleted = Json.format[Deleted]
+
+}
+
 

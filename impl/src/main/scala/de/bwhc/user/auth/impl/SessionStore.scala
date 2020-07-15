@@ -93,7 +93,7 @@ with Logging
                        )
                        .map(_.access_token)
 
-        log.debug("Finish running session clean-up task")
+        log.debug("Finished running session clean-up task")
       }
     },
     30,

@@ -25,7 +25,8 @@ trait UserService
     cmd: UserCommand
   )(
     implicit ec: ExecutionContext
-  ): Future[Either[NonEmptyList[String],User]]
+  ): Future[Either[NonEmptyList[String],UserEvent]]
+//  ): Future[Either[NonEmptyList[String],User]]
 
   def !(cmd: UserCommand)(implicit ec: ExecutionContext) = process(cmd)
 
