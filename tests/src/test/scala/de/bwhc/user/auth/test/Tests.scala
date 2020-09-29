@@ -83,7 +83,7 @@ class Tests extends AsyncFlatSpec
 
       loginOk =  loginResult.isRight mustBe true
 
-      LoggedIn(UserWithRoles(username,roles),token) = loginResult.toOption.get
+      LoggedIn(UserWithRoles(username,roles),token,_) = loginResult.toOption.get
 
       userOk  = username mustBe create.username
       rolesOk = roles    mustBe create.roles

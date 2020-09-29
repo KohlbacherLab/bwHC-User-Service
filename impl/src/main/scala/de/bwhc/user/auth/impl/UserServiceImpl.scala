@@ -24,6 +24,8 @@ import cats.data.{
 import cats.syntax.either._
 
 import de.bwhc.util.Logging
+import de.bwhc.util.data.Validation._
+import de.bwhc.util.data.Validation.dsl._
 import de.bwhc.util.oauth._
 import de.bwhc.util.hash.MD5
 
@@ -48,7 +50,6 @@ class UserServiceProviderImpl extends UserServiceProvider
 object UserServiceImpl
 {
 
-  type ValidationResult[+T] = ValidatedNel[String,T]
 
 
   // Regex to check password criteria:
@@ -57,6 +58,20 @@ object UserServiceImpl
   private val pwdRegex = """\A(?=\S*?[0-9])(?=\S*?[a-z])(?=\S*?[A-Z])(?=\S*?[@#$%/-\^&+=])\S{8,}\z""".r
   
 
+  implicit val passwordValidator = {
+    (pwd: User.Password) =>
+    pwd.value must matchRegex (pwdRegex) otherwise (
+      """Invalid password! Ensure the following criteria are met:
+         - Minimum 8 characters,
+         - At least one uppercase letter and one lowercase letter
+         - At least one number
+         - At least one special character
+         - No whitespace"""
+      ) map (_ => pwd)
+  }
+
+//  type ValidationResult[+T] = ValidatedNel[String,T]
+/*    
   private def validatePassword(
     pwd: User.Password
   ): ValidationResult[User.Password] = {
@@ -70,8 +85,8 @@ object UserServiceImpl
          - At least one special character
          - No whitespace"""
     ) 
-       
   }
+*/       
 
 }
 
@@ -120,7 +135,8 @@ with Logging
                              s"Username '${username.value}' is already in use"
                            )
                          )
-          pwdOk      <- Future(validatePassword(pwd))
+          pwdOk      <- Future { pwd validate }
+//          pwdOk      <- Future(validatePassword(pwd))
           result     <-
             (usernameOk,pwdOk).mapN(
               (_,_) =>
@@ -162,7 +178,8 @@ with Logging
               newPwd.fold(
                 Validated.validNel[String,Option[User.Password]](None)
               )(
-                pwd => validatePassword(pwd).map(Option(_))
+                pwd => pwd.validate.map(Option(_))
+//                pwd => validatePassword(pwd).map(Option(_))
               )
             )
           

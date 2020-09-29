@@ -101,7 +101,7 @@ with Logging
     SECONDS
   )  
 
-  
+  //TODO: improve randomness of token  
   def newToken = AccessToken(java.util.UUID.randomUUID.toString)
 
 
@@ -121,7 +121,7 @@ with Logging
   )(
     implicit ec: ExecutionContext
   ): Future[Option[Session]] =
-    Future { sessions.get(token) }
+    Future { sessions.get(token) } //TODO: refresh session expiry dateTime
 
 
   def findFor(

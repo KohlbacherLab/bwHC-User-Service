@@ -19,7 +19,9 @@ object User
   
   object Status extends Enumeration
   {
-    val Active,Blocked,Deleted = Value
+    val Active,
+        Blocked,
+        Deleted = Value
 
     implicit val format = Json.formatEnum(this)
   }
