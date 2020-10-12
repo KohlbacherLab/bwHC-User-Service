@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.api
+package de.bwhc.user.api
 
 
 
@@ -16,6 +16,11 @@ import cats.data.NonEmptyList
 import de.bwhc.util.spi._
 import de.bwhc.util.oauth.AccessToken
 
+
+
+trait UserServiceProvider extends SPI[UserService]
+
+object UserService extends SPILoader(classOf[UserServiceProvider])
 
 
 trait UserService
@@ -38,6 +43,19 @@ trait UserService
   def !(cmd: UserCommand)(implicit ec: ExecutionContext) = process(cmd)
 
 
+  def identify(
+    username: User.Name,
+    password: User.Password
+  )(
+    implicit ec: ExecutionContext
+  ): Future[Option[User]]
+
+
+  def getAll(
+    implicit ec: ExecutionContext
+  ): Future[Iterable[User]]
+
+
   def get(
     id: User.Id
   )(
@@ -45,7 +63,7 @@ trait UserService
   ): Future[Option[User]]
 
 
-
+/*
   def process(
     cmd: SessionCommand
   )(
@@ -61,11 +79,6 @@ trait UserService
   )(
     implicit ec: ExecutionContext
   ): Future[Option[Session]]
-
+*/
 
 }
-
-
-trait UserServiceProvider extends SPI[UserService]
-
-object UserService extends SPILoader(classOf[UserServiceProvider])

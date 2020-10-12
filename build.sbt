@@ -5,9 +5,9 @@
 
 
 name := "bwhc-user-service"
-organization in ThisBuild := "de.bwhc.user.auth"
+organization in ThisBuild := "de.bwhc"
 scalaVersion in ThisBuild := "2.13.1"
-version in ThisBuild := "0.1-SNAPSHOT"
+version in ThisBuild := "1.0-SNAPSHOT"
 
 
 //-----------------------------------------------------------------------------

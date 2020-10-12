@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.impl
+package de.bwhc.user.impl
 
 
 
@@ -9,7 +9,7 @@ import scala.concurrent.{
 
 import de.bwhc.util.spi._
 
-import de.bwhc.user.auth.api.User
+import de.bwhc.user.api.User
 
 
 
@@ -29,6 +29,11 @@ trait UserDB
   )(
     implicit ec: ExecutionContext
   ): Future[UserWithPassword]
+
+
+  def isEmpty(
+    implicit ec: ExecutionContext
+  ): Future[Boolean]
 
 
   def filter(

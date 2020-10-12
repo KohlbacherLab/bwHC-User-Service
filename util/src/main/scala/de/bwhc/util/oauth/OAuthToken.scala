@@ -25,6 +25,9 @@ final case class OAuthToken
   created_at: Long,
   scope: Option[String]
 )
+{
+  def isExpired = (Instant.now isAfter Instant.ofEpochMilli(created_at + expires_in))
+}
 
 object OAuthToken
 {

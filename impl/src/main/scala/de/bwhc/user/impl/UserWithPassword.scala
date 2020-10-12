@@ -1,11 +1,11 @@
-package de.bwhc.user.auth.impl
+package de.bwhc.user.impl
 
 
 import java.time.{Instant,LocalDate}
 
 import play.api.libs.json.Json
 
-import de.bwhc.user.auth.api._
+import de.bwhc.user.api._
 
 
 final case class UserWithPassword

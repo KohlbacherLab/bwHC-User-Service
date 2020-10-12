@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.api
+package de.bwhc.user.api
 
 
 

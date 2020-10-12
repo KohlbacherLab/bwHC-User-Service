@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.api
+package de.bwhc.user.api
 
 
 
@@ -6,7 +6,6 @@ import java.time.{LocalDate,Instant}
 
 import play.api.libs.json.Json
 
-//import de.bwhc.util.ddd._
 import de.bwhc.util.ddd.Event
 
 
@@ -19,9 +18,7 @@ object User
   
   object Status extends Enumeration
   {
-    val Active,
-        Blocked,
-        Deleted = Value
+    val Active, Blocked, Deleted = Value
 
     implicit val format = Json.formatEnum(this)
   }

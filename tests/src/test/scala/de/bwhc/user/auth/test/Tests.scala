@@ -8,7 +8,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers._
 import org.scalatest.OptionValues._
 
-import de.bwhc.user.auth.api._
+import de.bwhc.user.api._
 
 
 
@@ -33,6 +33,10 @@ class Tests extends AsyncFlatSpec
   import UserEvent._
 
  
+  
+  lazy val userService = serviceLoad.get
+  
+  
   val create =
     Create(
       User.Name("test_user"),
@@ -43,9 +47,6 @@ class Tests extends AsyncFlatSpec
       ),
       Set(Role.Admin,Role.ZPMCoordinator)
     )
-  
-  
-  lazy val userService = serviceLoad.get
   
 
   "User creation" must "work" in {
@@ -61,6 +62,7 @@ class Tests extends AsyncFlatSpec
 
   }
 
+  
   "Duplicate User creation" must "NOT work" in {
 
     for {
@@ -70,7 +72,8 @@ class Tests extends AsyncFlatSpec
 
   }
 
-
+  
+/*
   import SessionCommand._
   import SessionEvent._
 
@@ -95,7 +98,7 @@ class Tests extends AsyncFlatSpec
     } yield logoutOk
 
   }
-
+*/
   
 
 

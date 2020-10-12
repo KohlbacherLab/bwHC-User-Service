@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.impl
+package de.bwhc.user.impl
 
 
 
@@ -13,7 +13,7 @@ import de.bwhc.util.Logging
 import de.bwhc.util.spi._
 import de.bwhc.util.oauth.AccessToken
 
-import de.bwhc.user.auth.api.{
+import de.bwhc.user.api.{
   Session,
   User
 }

@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.fs.repo
+package de.bwhc.user.fs.repo
 
 
 

@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.api
+package de.bwhc.user.api
 
 
 
@@ -7,7 +7,6 @@ import play.api.libs.json.Json
 
 object Role extends Enumeration
 {
-
   type Role = Value
 
   val Admin, ZPMCoordinator, MTBCoordinator, Researcher = Value

@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.impl
+package de.bwhc.user.impl
 
 
 import java.time.{Instant,LocalDate}
@@ -29,7 +29,7 @@ import de.bwhc.util.data.Validation.dsl._
 import de.bwhc.util.oauth._
 import de.bwhc.util.hash.MD5
 
-import de.bwhc.user.auth.api._
+import de.bwhc.user.api._
 
 
 
@@ -39,9 +39,10 @@ class UserServiceProviderImpl extends UserServiceProvider
   def getInstance: UserService = {
 
     val userDB       = UserDB.getInstance.get
-    val sessionStore = SessionStore.getInstance.getOrElse(DefaultSessionStore)
+//    val sessionStore = SessionStore.getInstance.getOrElse(DefaultSessionStore)
 
-    new UserServiceImpl(userDB,sessionStore)
+    new UserServiceImpl(userDB)
+//    new UserServiceImpl(userDB,sessionStore)
   }
 
 }
@@ -49,8 +50,6 @@ class UserServiceProviderImpl extends UserServiceProvider
 
 object UserServiceImpl
 {
-
-
 
   // Regex to check password criteria:
   // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
@@ -60,33 +59,15 @@ object UserServiceImpl
 
   implicit val passwordValidator = {
     (pwd: User.Password) =>
-    pwd.value must matchRegex (pwdRegex) otherwise (
-      """Invalid password! Ensure the following criteria are met:
-         - Minimum 8 characters,
-         - At least one uppercase letter and one lowercase letter
-         - At least one number
-         - At least one special character
-         - No whitespace"""
-      ) map (_ => pwd)
+      pwd.value must matchRegex (pwdRegex) otherwise (
+        """Invalid password! Ensure the following criteria are met:
+           - Minimum 8 characters,
+           - At least one uppercase letter and one lowercase letter
+           - At least one number
+           - At least one special character
+           - No whitespace"""
+        ) map (_ => pwd)
   }
-
-//  type ValidationResult[+T] = ValidatedNel[String,T]
-/*    
-  private def validatePassword(
-    pwd: User.Password
-  ): ValidationResult[User.Password] = {
-    Validated.condNel(
-      pwdRegex.matches(pwd.value),
-      pwd,
-      """Invalid password! Ensure the following criteria are met:
-         - Minimum eight characters,
-         - At least one uppercase letter and one lowercase letter
-         - At least one number
-         - At least one special character
-         - No whitespace"""
-    ) 
-  }
-*/       
 
 }
 
@@ -94,7 +75,7 @@ object UserServiceImpl
 class UserServiceImpl
 (
   private val userDB: UserDB,
-  private val sessions: SessionStore
+//  private val sessions: SessionStore
 )
 extends UserService
 with Logging
@@ -110,14 +91,13 @@ with Logging
   //---------------------------------------------------------------------------
 
 
-  def process(
+  override def process(
     cmd: UserCommand
   )(
     implicit ec: ExecutionContext
   ): Future[ErrorsOr[UserEvent]] = {
-//  ): Future[Either[NonEmptyList[String],UserEvent]] = {
 
-    import cats.implicits._
+    import cats.syntax.apply._
     import UserCommand._
     import UserEvent._
 
@@ -127,6 +107,7 @@ with Logging
       case Create(username,pwd,humanName,roles) => {
 
         for {
+
           usernameOk <- userDB.find(_.name == username)
                          .map(user =>
                            Validated.condNel(
@@ -135,8 +116,9 @@ with Logging
                              s"Username '${username.value}' is already in use"
                            )
                          )
+
           pwdOk      <- Future { pwd validate }
-//          pwdOk      <- Future(validatePassword(pwd))
+
           result     <-
             (usernameOk,pwdOk).mapN(
               (_,_) =>
@@ -179,7 +161,6 @@ with Logging
                 Validated.validNel[String,Option[User.Password]](None)
               )(
                 pwd => pwd.validate.map(Option(_))
-//                pwd => validatePassword(pwd).map(Option(_))
               )
             )
           
@@ -264,7 +245,62 @@ with Logging
   }
 
 
-  def get(
+  override def identify(
+    username: User.Name,
+    password: User.Password
+  )(
+    implicit ec: ExecutionContext
+  ): Future[Option[User]] = {
+
+    if (username == User.Name("admin") &&
+        password == User.Password("admin")){
+
+      for {
+        empty <- userDB.isEmpty
+        user = if (empty)
+          Some(
+            User(
+              userDB.newId,
+              username,
+              HumanName(
+                HumanName.Given("Admin"),
+                HumanName.Family("istrator")
+              ),
+              User.Status.Active,
+              Set(Role.Admin),
+              LocalDate.now,
+              Instant.now
+            )
+          )
+           else None
+      } yield user
+
+    } else {
+
+//TODO: block user account after N unsuccessful login attempts 
+      for {
+        user <-
+          userDB.find(usr =>
+            usr.name == username &&
+            usr.password == User.Password(MD5(password.value))
+          )
+      } yield user.map(_.toUser)
+
+    }
+
+  }
+
+
+  override def getAll(
+    implicit ec: ExecutionContext
+  ): Future[Iterable[User]] = 
+    for {
+      users  <- userDB.filter(_ => true)
+      result =  users.map(_.toUser)
+    } yield result
+
+
+  override def get(
     id: User.Id
   )(
     implicit ec: ExecutionContext
@@ -280,7 +316,8 @@ with Logging
   // Session management ops
   //---------------------------------------------------------------------------
 
-  def process(
+/*
+  override def process(
     cmd: SessionCommand
   )(
     implicit ec: ExecutionContext
@@ -396,6 +433,6 @@ with Logging
     sessions.get(token)
 
   }
-
+*/
 
 }

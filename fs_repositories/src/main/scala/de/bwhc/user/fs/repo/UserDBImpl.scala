@@ -1,4 +1,4 @@
-package de.bwhc.user.auth.fs.repo
+package de.bwhc.user.fs.repo
 
 
 import java.io.File
@@ -12,9 +12,9 @@ import scala.concurrent.{
 import de.ekut.tbi.repo.AsyncRepository
 import de.ekut.tbi.repo.fs.AsyncFSBackedInMemRepository
 
-import de.bwhc.user.auth.api.User
+import de.bwhc.user.api.User
 
-import de.bwhc.user.auth.impl.{
+import de.bwhc.user.impl.{
   UserDB,
   UserDBProvider,
   UserWithPassword
@@ -65,6 +65,14 @@ extends UserDB
     db.save(user)
       .map(_ => user)
   }
+
+
+  def isEmpty(
+    implicit ec: ExecutionContext
+  ): Future[Boolean] = 
+    for {
+      users <- db.query(_ => true)
+    } yield users.isEmpty
 
 
   def filter(
