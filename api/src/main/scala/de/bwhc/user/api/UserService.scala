@@ -38,7 +38,6 @@ trait UserService
   )(
     implicit ec: ExecutionContext
   ): Future[ErrorsOr[UserEvent]]
-//  ): Future[Either[NonEmptyList[String],UserEvent]]
 
   def !(cmd: UserCommand)(implicit ec: ExecutionContext) = process(cmd)
 
@@ -61,24 +60,5 @@ trait UserService
   )(
     implicit ec: ExecutionContext
   ): Future[Option[User]]
-
-
-/*
-  def process(
-    cmd: SessionCommand
-  )(
-    implicit ec: ExecutionContext
-  ): Future[ErrorsOr[SessionEvent]]
-//  ): Future[Either[NonEmptyList[String],SessionEvent]]
-
-  def !(cmd: SessionCommand)(implicit ec: ExecutionContext) = process(cmd)
-
-
-  def sessionFor(
-    token: AccessToken
-  )(
-    implicit ec: ExecutionContext
-  ): Future[Option[Session]]
-*/
 
 }
