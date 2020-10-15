@@ -279,12 +279,14 @@ with Logging
 
 //TODO: block user account after N unsuccessful login attempts 
       for {
-        user <-
+        optUser <-
           userDB.find(usr =>
             usr.name == username &&
             usr.password == User.Password(MD5(password.value))
           )
-      } yield user.map(_.toUser)
+        user = optUser.filter(_.status != User.Status.Blocked)
+                 .map(_.toUser)
+      } yield user
 
     }
 

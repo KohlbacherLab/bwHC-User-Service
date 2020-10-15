@@ -45,7 +45,7 @@ class Tests extends AsyncFlatSpec
         HumanName.Given("Ute"),
         HumanName.Family("Musterfrau")
       ),
-      Set(Role.Admin,Role.ZPMCoordinator)
+      Role.values
     )
   
 
