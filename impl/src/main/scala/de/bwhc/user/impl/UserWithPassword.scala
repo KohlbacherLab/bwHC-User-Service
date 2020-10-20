@@ -19,10 +19,12 @@ final case class UserWithPassword
   registeredOn: LocalDate,
   lastUpdate: Instant
 )
+/*
 {
   def toUser =
     User(id,name,humanName,status,roles,registeredOn,lastUpdate)
 }
+*/
 
 object UserWithPassword
 {

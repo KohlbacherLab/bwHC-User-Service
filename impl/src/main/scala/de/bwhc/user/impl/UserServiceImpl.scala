@@ -28,6 +28,8 @@ import de.bwhc.util.data.Validation._
 import de.bwhc.util.data.Validation.dsl._
 import de.bwhc.util.oauth._
 import de.bwhc.util.hash.MD5
+import de.bwhc.util.mapping._
+import de.bwhc.util.mapping.syntax._
 
 import de.bwhc.user.api._
 
@@ -84,6 +86,9 @@ with Logging
   import UserServiceImpl._
 
 
+  implicit val UserwithPasswordToUser = deriveMapping[UserWithPassword,User]
+
+
   //TODO: Logging!
 
   //---------------------------------------------------------------------------
@@ -134,7 +139,8 @@ with Logging
                     Instant.now
                   )
                 )
-                .map(_.toUser)
+                .map(_.mapTo[User])
+//                .map(_.toUser)
                 .map(Created(_))
                 .map(_.asRight[NonEmptyList[String]])
             )
@@ -177,7 +183,8 @@ with Logging
                   )
                 )
                 .map(_.get)
-                .map(_.toUser)
+//                .map(_.toUser)
+                .map(_.mapTo[User])
                 .map(Updated(_))
                 .map(_.asRight[NonEmptyList[String]])
             )
@@ -205,7 +212,8 @@ with Logging
                 )
               )
               .map(_.get)
-              .map(_.toUser)
+//              .map(_.toUser)
+              .map(_.mapTo[User])
               .map(Updated(_))
               .map(_.asRight[NonEmptyList[String]])
 
@@ -285,7 +293,8 @@ with Logging
             usr.password == User.Password(MD5(password.value))
           )
         user = optUser.filter(_.status != User.Status.Blocked)
-                 .map(_.toUser)
+//                 .map(_.toUser)
+                 .map(_.mapTo[User])
       } yield user
 
     }
@@ -298,7 +307,8 @@ with Logging
   ): Future[Iterable[User]] = 
     for {
       users  <- userDB.filter(_ => true)
-      result =  users.map(_.toUser)
+//      result =  users.map(_.toUser)
+      result =  users.map(_.mapTo[User])
     } yield result
 
 
@@ -309,7 +319,8 @@ with Logging
   ): Future[Option[User]] = {
     for {
       usr  <- userDB.get(id)
-      user = usr.map(_.toUser)
+      user = usr.map(_.mapTo[User])
+//      user = usr.map(_.toUser)
     } yield user
   }
 
