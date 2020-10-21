@@ -34,7 +34,7 @@ object User
 final case class User
 (
   id: User.Id,
-  name: User.Name,
+  username: User.Name,
   humanName: HumanName, 
   status: User.Status.Value,
   roles: Set[Role.Value],
@@ -59,7 +59,7 @@ object UserCommand
   (
     id:        User.Id,
     humanName: Option[HumanName],
-    name:      Option[User.Name],
+    username:  Option[User.Name],
     password:  Option[User.Password],
   ) extends UserCommand
 

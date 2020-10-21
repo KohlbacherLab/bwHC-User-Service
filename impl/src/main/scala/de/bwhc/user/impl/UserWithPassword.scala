@@ -11,7 +11,7 @@ import de.bwhc.user.api._
 final case class UserWithPassword
 (
   id: User.Id,
-  name: User.Name,
+  username: User.Name,
   password: User.Password,
   humanName: HumanName,
   status: User.Status.Value,

@@ -41,10 +41,8 @@ class UserServiceProviderImpl extends UserServiceProvider
   def getInstance: UserService = {
 
     val userDB       = UserDB.getInstance.get
-//    val sessionStore = SessionStore.getInstance.getOrElse(DefaultSessionStore)
 
     new UserServiceImpl(userDB)
-//    new UserServiceImpl(userDB,sessionStore)
   }
 
 }
@@ -77,7 +75,6 @@ object UserServiceImpl
 class UserServiceImpl
 (
   private val userDB: UserDB,
-//  private val sessions: SessionStore
 )
 extends UserService
 with Logging
@@ -113,7 +110,7 @@ with Logging
 
         for {
 
-          usernameOk <- userDB.find(_.name == username)
+          usernameOk <- userDB.find(_.username == username)
                          .map(user =>
                            Validated.condNel(
                              !user.isDefined,
@@ -140,7 +137,6 @@ with Logging
                   )
                 )
                 .map(_.mapTo[User])
-//                .map(_.toUser)
                 .map(Created(_))
                 .map(_.asRight[NonEmptyList[String]])
             )
@@ -177,13 +173,12 @@ with Logging
                   id,
                   _.copy(
                     humanName  = humanName.getOrElse(user.humanName),
-                    name       = newName.getOrElse(user.name),
+                    username   = newName.getOrElse(user.username),
                     password   = newPwd.getOrElse(user.password),
                     lastUpdate = Instant.now
                   )
                 )
                 .map(_.get)
-//                .map(_.toUser)
                 .map(_.mapTo[User])
                 .map(Updated(_))
                 .map(_.asRight[NonEmptyList[String]])
@@ -212,7 +207,6 @@ with Logging
                 )
               )
               .map(_.get)
-//              .map(_.toUser)
               .map(_.mapTo[User])
               .map(Updated(_))
               .map(_.asRight[NonEmptyList[String]])
@@ -289,11 +283,11 @@ with Logging
       for {
         optUser <-
           userDB.find(usr =>
-            usr.name == username &&
+            usr.username == username &&
             usr.password == User.Password(MD5(password.value))
           )
-        user = optUser.filter(_.status != User.Status.Blocked)
-//                 .map(_.toUser)
+        user = optUser.filter(_.status == User.Status.Active)
+//        user = optUser.filter(usr => usr.status == User.Status.Blocked || status != User.Status.Blocked)
                  .map(_.mapTo[User])
       } yield user
 
@@ -307,7 +301,6 @@ with Logging
   ): Future[Iterable[User]] = 
     for {
       users  <- userDB.filter(_ => true)
-//      result =  users.map(_.toUser)
       result =  users.map(_.mapTo[User])
     } yield result
 
@@ -320,132 +313,8 @@ with Logging
     for {
       usr  <- userDB.get(id)
       user = usr.map(_.mapTo[User])
-//      user = usr.map(_.toUser)
     } yield user
   }
 
-
-  //---------------------------------------------------------------------------
-  // Session management ops
-  //---------------------------------------------------------------------------
-
-/*
-  override def process(
-    cmd: SessionCommand
-  )(
-    implicit ec: ExecutionContext
-  ): Future[ErrorsOr[SessionEvent]] = {
-//  ): Future[Either[NonEmptyList[String],SessionEvent]] = {
-
-    import SessionCommand._
-    import SessionEvent._
-
-    cmd match {
-
-      //-----------------------------------------------------------------------
-      case Login(username,pwd) => {
-
-        if (username == User.Name("admin") && pwd == User.Password("admin")){
-
-          for {
-            users <- userDB.filter(_ => true)
-            if users.isEmpty
-            token <-
-              Future.successful(
-                OAuthToken(
-                  sessions.newToken,
-                  TokenType.Bearer,
-                  15*60*1000,  
-                  None,
-                  Instant.now.toEpochMilli,
-                  Some("bwHealthCloud")
-                )
-              )
-
-            userRoles = UserWithRoles(username,Set(Role.Admin))
-
-            session <- 
-              sessions.save(
-                Session( 
-                  token,
-                  userRoles,
-                  Instant.now
-                )
-              )
-            loggedIn = LoggedIn(userRoles,token).asRight[NonEmptyList[String]] 
-
-          } yield loggedIn 
-
-        } else {
-
-        for {
-          exists <- userDB.find(usr => usr.name == username && usr.password == User.Password(MD5(pwd.value)))
-          result <-
-            exists match {
-              case Some(user) if (user.status == User.Status.Active) =>
-                for {
-                  token <-
-                    Future.successful(
-                      OAuthToken(
-                        sessions.newToken,
-                        TokenType.Bearer,
-                        15*60*1000,  
-                        None,
-                        Instant.now.toEpochMilli,
-                        Some("bwHealthCloud")
-                      )
-                    )
-
-                  userRoles = UserWithRoles(user.name,user.roles)
-
-                  session <- 
-                    sessions.save(
-                      Session( 
-                        token,
-                        userRoles,
-                        Instant.now
-                      )
-                    )
-                  loggedIn = LoggedIn(userRoles,token).asRight[NonEmptyList[String]] 
-                } yield loggedIn 
-
-              case None =>
-//TODO: block user account after N unsuccessful login attempts 
-                Future.successful(NonEmptyList.one(s"Invalid credentials").asLeft[SessionEvent])
-            }
-        } yield result
-
-        }
-      }
-
-      //-----------------------------------------------------------------------
-      case Logout(username) => {
-
-        Future.successful(LoggedOut().asRight[NonEmptyList[String]])
-          .andThen {
-            case Success(_) => 
-              for {
-                session <- sessions.findFor(username)
-                if session.isDefined
-                loggedOut <- sessions.delete(session.get.id)
-              } yield loggedOut
-          }
-      }
-
-    }
-
-  }
-
-
-  def sessionFor(
-    token: AccessToken
-  )(
-    implicit ec: ExecutionContext
-  ): Future[Option[Session]] = {
-
-    sessions.get(token)
-
-  }
-*/
 
 }
