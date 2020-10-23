@@ -269,7 +269,9 @@ with Logging
                 HumanName.Family("istrator")
               ),
               User.Status.Active,
+//TODO: re-consider creating a temp user with ALL roles instead of just Admin
               Set(Role.Admin),
+//              Role.values,   
               LocalDate.now,
               Instant.now
             )
@@ -287,7 +289,6 @@ with Logging
             usr.password == User.Password(MD5(password.value))
           )
         user = optUser.filter(_.status == User.Status.Active)
-//        user = optUser.filter(usr => usr.status == User.Status.Blocked || status != User.Status.Blocked)
                  .map(_.mapTo[User])
       } yield user
 
