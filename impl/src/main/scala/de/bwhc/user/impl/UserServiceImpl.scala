@@ -26,7 +26,6 @@ import cats.syntax.either._
 import de.bwhc.util.Logging
 import de.bwhc.util.data.Validation._
 import de.bwhc.util.data.Validation.dsl._
-import de.bwhc.util.oauth._
 import de.bwhc.util.hash.MD5
 import de.bwhc.util.mapping._
 import de.bwhc.util.mapping.syntax._
@@ -270,8 +269,8 @@ with Logging
               ),
               User.Status.Active,
 //TODO: re-consider creating a temp user with ALL roles instead of just Admin
-              Set(Role.Admin),
-//              Role.values,   
+//              Set(Role.Admin),
+              Role.values,   
               LocalDate.now,
               Instant.now
             )

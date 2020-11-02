@@ -14,7 +14,6 @@ import play.api.libs.json.Json
 import cats.data.NonEmptyList
 
 import de.bwhc.util.spi._
-import de.bwhc.util.oauth.AccessToken
 
 
 
