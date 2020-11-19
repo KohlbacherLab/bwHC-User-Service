@@ -5,22 +5,16 @@ package de.bwhc.user.api
 import play.api.libs.json.Json
 
 
-object HumanName
+case class GivenName(value: String) extends AnyVal
+object GivenName
 {
-
-  final case class Given(value: String) extends AnyVal
-  final case class Family(value: String) extends AnyVal
-
-  implicit val formatGiven     = Json.valueFormat[Given]
-  implicit val formatFamily    = Json.valueFormat[Family]
-  implicit val formatHumanName = Json.format[HumanName]
-
+  implicit val format = Json.valueFormat[GivenName]
 }
 
 
-final case class HumanName
-(
-  given: HumanName.Given,
-  family: HumanName.Family
-)
+case class FamilyName(value: String) extends AnyVal
+object FamilyName
+{
+  implicit val format = Json.valueFormat[FamilyName]
+}
 

@@ -98,6 +98,7 @@ with Logging
     implicit ec: ExecutionContext
   ): Future[ErrorsOr[UserEvent]] = {
 
+    import de.bwhc.util.syntax.piping._
     import cats.syntax.apply._
     import UserCommand._
     import UserEvent._
@@ -105,7 +106,7 @@ with Logging
     cmd match {
 
       //-----------------------------------------------------------------------
-      case Create(username,pwd,humanName,roles) => {
+      case Create(username,pwd,givenName,familyName,roles) => {
 
         for {
 
@@ -128,7 +129,8 @@ with Logging
                     userDB.newId,
                     username,
                     User.Password(MD5(pwd.value)),
-                    humanName,
+                    givenName,
+                    familyName,
                     User.Status.Active,
                     roles,
                     LocalDate.now,
@@ -146,8 +148,9 @@ with Logging
         } yield result
       }
 
+
       //-----------------------------------------------------------------------
-      case Update(id,humanName,newName,newPwd) => {
+      case Update(id,newGivenName,newFamilyName,newName,newPwd) => {
 
         for {
           userExists <-
@@ -170,12 +173,21 @@ with Logging
               (user,_) =>
                 userDB.update(
                   id,
+                  usr => {
+                    newGivenName.fold(usr)(v => usr.copy(givenName = v)) |
+                    (u => newFamilyName.fold(u)(v => u.copy(familyName = v))) |
+                    (u => newName.fold(u)(v => u.copy(username = v))) |
+                    (u => newPwd.fold(u)(hn => u.copy(password = hn))) |
+                    (_.copy(lastUpdate = Instant.now))
+                  }
+/*
                   _.copy(
                     humanName  = humanName.getOrElse(user.humanName),
                     username   = newName.getOrElse(user.username),
                     password   = newPwd.getOrElse(user.password),
                     lastUpdate = Instant.now
                   )
+*/
                 )
                 .map(_.get)
                 .map(_.mapTo[User])
@@ -263,10 +275,8 @@ with Logging
             User(
               userDB.newId,
               username,
-              HumanName(
-                HumanName.Given("Admin"),
-                HumanName.Family("istrator")
-              ),
+              GivenName("Admin"),
+              FamilyName("istrator"),
               User.Status.Active,
 //TODO: re-consider creating a temp user with ALL roles instead of just Admin
 //              Set(Role.Admin),

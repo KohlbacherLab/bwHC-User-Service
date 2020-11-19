@@ -41,10 +41,8 @@ class Tests extends AsyncFlatSpec
     Create(
       User.Name("test_user"),
       User.Password("""C|-|AnGe$1T"""),
-      HumanName(
-        HumanName.Given("Ute"),
-        HumanName.Family("Musterfrau")
-      ),
+      GivenName("Ute"),
+      FamilyName("Musterfrau"),
       Role.values
     )
   

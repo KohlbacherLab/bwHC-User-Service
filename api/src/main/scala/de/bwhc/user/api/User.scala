@@ -35,7 +35,8 @@ final case class User
 (
   id: User.Id,
   username: User.Name,
-  humanName: HumanName, 
+  givenName: GivenName, 
+  familyName: FamilyName, 
   status: User.Status.Value,
   roles: Set[Role.Value],
   registeredOn: LocalDate,
@@ -51,14 +52,16 @@ object UserCommand
   (
     username:  User.Name,
     password:  User.Password,
-    humanName: HumanName,
+    givenName: GivenName, 
+    familyName: FamilyName, 
     roles:     Set[Role.Value]
   ) extends UserCommand
 
   final case class Update
   (
     id:        User.Id,
-    humanName: Option[HumanName],
+    givenName: Option[GivenName], 
+    familyName: Option[FamilyName], 
     username:  Option[User.Name],
     password:  Option[User.Password],
   ) extends UserCommand
