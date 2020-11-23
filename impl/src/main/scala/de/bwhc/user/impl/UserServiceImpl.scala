@@ -100,6 +100,7 @@ with Logging
 
     import de.bwhc.util.syntax.piping._
     import cats.syntax.apply._
+    import cats.syntax.validated._
     import UserCommand._
     import UserEvent._
 
@@ -110,8 +111,9 @@ with Logging
 
         for {
 
+          // Ensure username is not a duplicate
           usernameOk <- userDB.find(_.username == username)
-                         .map(user =>
+                          .map(user =>
                            Validated.condNel(
                              !user.isDefined,
                              username,
@@ -119,11 +121,22 @@ with Logging
                            )
                          )
 
+          // Ensure first created user has Admin role
+          adminEnsured <- userDB.filter(_.roles contains Role.Admin)
+                            .map(
+                              adminUsers =>
+                                if (adminUsers.isEmpty)
+                                   Role.Admin must be (in (roles)) otherwise ("First created user MUST have Admin rights")
+                                else
+                                   roles.validNel[String]
+                            )
+
+          // Ensure password meets complexity requirements
           pwdOk      <- Future { pwd validate }
 
           result     <-
-            (usernameOk,pwdOk).mapN(
-              (_,_) =>
+            (usernameOk,adminEnsured,pwdOk).mapN(
+              (_,_,_) =>
                 userDB.save(
                   UserWithPassword(
                     userDB.newId,
@@ -156,7 +169,7 @@ with Logging
           userExists <-
             userDB.get(id)
             .map(
-              user => Validated.fromOption(user,s"Invalid User ID ${id.value}").toValidatedNel
+              user => user mustBe defined otherwise (s"Invalid User ID ${id.value}")
             )
           
           pwdOk <-
@@ -208,6 +221,7 @@ with Logging
 
         for {
           exists <- userDB.get(id)
+
           result <- exists match {
             case Some(user) =>
               userDB.update(
@@ -234,22 +248,34 @@ with Logging
       case Delete(id) => {
 
         for {
-          exists <- userDB.get(id)
-          result <- exists match {
-            case Some(user) =>
-              userDB.update(
-                id,
-                _.copy(
-                  status = User.Status.Deleted,
-                  lastUpdate = Instant.now
-                )
-              )
-              .map(_.get)
-              .map(_ => Deleted(id).asRight[NonEmptyList[String]])
+          userExists <- userDB.get(id)
+                          .map(_ mustBe defined otherwise (s"Invalid User ID ${id.value}"))
 
-            case None =>
-              Future.successful(NonEmptyList.one(s"Invalid User ID ${id.value}").asLeft[UserEvent])
-          }
+          // Ensure not last Admin user is deleted
+          notLastAdmin <- userDB.filter(usr => (usr.roles contains Role.Admin) && usr.id != id)
+                            .map( 
+                              adminUsers =>
+                                if (adminUsers.isEmpty)
+                                  "Can't delete last user with Admin rights".invalidNel[Boolean]
+                                else
+                                  true.validNel[String]
+                            )
+
+          result <-
+            (userExists,notLastAdmin).mapN(
+              (_,_) =>
+                userDB.update(
+                  id,
+                  _.copy(
+                    status = User.Status.Deleted,
+                    lastUpdate = Instant.now
+                  )
+                )
+            )
+            .fold(
+              errs => Future.successful(errs.asLeft[UserEvent]),
+              ok => ok.map(_ => Deleted(id).asRight[NonEmptyList[String]])
+            )
         } yield result
       }
 
