@@ -109,6 +109,8 @@ with Logging
       //-----------------------------------------------------------------------
       case Create(username,pwd,givenName,familyName,roles) => {
 
+        log.info(s"Handling User account creation for ${givenName.value} ${familyName.value}")
+
         for {
 
           // Ensure username is not a duplicate
@@ -165,12 +167,12 @@ with Logging
       //-----------------------------------------------------------------------
       case Update(id,newGivenName,newFamilyName,newName,newPwd) => {
 
+        log.info(s"Handling User Data update for User $id")
+
         for {
           userExists <-
             userDB.get(id)
-            .map(
-              user => user mustBe defined otherwise (s"Invalid User ID ${id.value}")
-            )
+              .map(_ mustBe defined otherwise (s"Invalid User $id"))
           
           pwdOk <-
             Future(
@@ -219,6 +221,8 @@ with Logging
       //-----------------------------------------------------------------------
       case UpdateRoles(id,roles) => {
 
+        log.info(s"Handling User Roles update for User $id")
+
         for {
           exists <- userDB.get(id)
 
@@ -237,7 +241,7 @@ with Logging
               .map(_.asRight[NonEmptyList[String]])
 
             case None =>
-              Future.successful(NonEmptyList.one(s"Invalid User ID ${id.value}").asLeft[UserEvent])
+              Future.successful(NonEmptyList.one(s"Invalid User $id").asLeft[UserEvent])
 
           }
         } yield result
@@ -247,9 +251,11 @@ with Logging
       //-----------------------------------------------------------------------
       case Delete(id) => {
 
+        log.info(s"Handling account deletion command for User $id")
+
         for {
           userExists <- userDB.get(id)
-                          .map(_ mustBe defined otherwise (s"Invalid User ID ${id.value}"))
+                          .map(_ mustBe defined otherwise (s"Invalid User $id"))
 
           // Ensure not last Admin user is deleted
           notLastAdmin <- userDB.filter(usr => (usr.roles contains Role.Admin) && usr.id != id)
@@ -291,42 +297,47 @@ with Logging
     implicit ec: ExecutionContext
   ): Future[Option[User]] = {
 
-    if (username == User.Name("admin") &&
-        password == User.Password("admin")){
+    log.info(s"Handling identification request for $username")
 
-      for {
-        empty <- userDB.isEmpty
-        user = if (empty)
-          Some(
-            User(
-              userDB.newId,
-              username,
-              GivenName("Admin"),
-              FamilyName("istrator"),
-              User.Status.Active,
+    (username,password) match {
+
+      case (User.Name("admin"),User.Password("admin")) => {
+
+        for {
+          empty <- userDB.isEmpty
+          user = if (empty)
+            Some(
+              User(
+                userDB.newId,
+                username,
+                GivenName("Admin"),
+                FamilyName("istrator"),
+                User.Status.Active,
 //TODO: re-consider creating a temp user with ALL roles instead of just Admin
-//              Set(Role.Admin),
-              Role.values,   
-              LocalDate.now,
-              Instant.now
+//                Set(Role.Admin),
+                Role.values,   
+                LocalDate.now,
+                Instant.now
+              )
             )
-          )
-           else None
-      } yield user
+            else None
+        } yield user
+      }
 
-    } else {
+      case _ => {
 
 //TODO: block user account after N unsuccessful login attempts 
-      for {
-        optUser <-
-          userDB.find(usr =>
-            usr.username == username &&
-            usr.password == User.Password(MD5(password.value))
-          )
-        user = optUser.filter(_.status == User.Status.Active)
-                 .map(_.mapTo[User])
-      } yield user
-
+        for {
+          optUser <-
+            userDB.find(usr =>
+              usr.username == username &&
+              usr.password == User.Password(MD5(password.value)) &&
+              usr.status   == User.Status.Active
+            )
+          user = optUser.map(_.mapTo[User])
+        } yield user
+      }
+      
     }
 
   }
@@ -334,21 +345,28 @@ with Logging
 
   override def getAll(
     implicit ec: ExecutionContext
-  ): Future[Iterable[User]] = 
+  ): Future[Iterable[User]] = {
+
+    log.info(s"Handling request for Users list")
+
     for {
       users  <- userDB.filter(_ => true)
       result =  users.map(_.mapTo[User])
     } yield result
 
+  }
 
   override def get(
     id: User.Id
   )(
     implicit ec: ExecutionContext
   ): Future[Option[User]] = {
+
+    log.info(s"Handling request for User object $id")
+
     for {
       usr  <- userDB.get(id)
-      user = usr.map(_.mapTo[User])
+      user =  usr.map(_.mapTo[User])
     } yield user
   }
 
