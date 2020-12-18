@@ -85,7 +85,11 @@ with Logging
   implicit val UserwithPasswordToUser = deriveMapping[UserWithPassword,User]
 
 
-  //TODO: Logging!
+  import scala.collection.concurrent.{Map,TrieMap}
+
+  private val tmpUsers: Map[User.Id,User] =
+    TrieMap.empty[User.Id,User] 
+
 
   //---------------------------------------------------------------------------
   // User management ops
@@ -158,7 +162,9 @@ with Logging
             )
             .fold(
               errs => Future.successful(errs.asLeft[UserEvent]),
-              created => created
+//              created => created
+              created =>
+                created.andThen { case Success(_) => tmpUsers.clear }
             )
         } yield result
       }
@@ -242,14 +248,19 @@ with Logging
                     lastUpdate = Instant.now
                   )
                 )
+/*
                 .map(_.get)
                 .map(_.mapTo[User])
                 .map(Updated(_))
                 .map(_.asRight[NonEmptyList[String]])
+*/
             )
             .fold(
               errs => Future.successful(errs.asLeft[UserEvent]),
-              ok => ok
+              _.map(_.get)
+               .map(_.mapTo[User])
+               .map(Updated(_))
+               .map(_.asRight[NonEmptyList[String]])
             )
 
 /*
@@ -317,11 +328,6 @@ with Logging
   }
 
 
-
-  import scala.collection.concurrent.{Map,TrieMap}
-
-  private val tmpUsers: Map[User.Id,User] =
-    TrieMap.empty[User.Id,User] 
 
 
   override def identify(
