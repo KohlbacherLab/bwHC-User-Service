@@ -195,14 +195,6 @@ with Logging
                     (u => newPwd.fold(u)(hn => u.copy(password = hn))) |
                     (_.copy(lastUpdate = Instant.now))
                   }
-/*
-                  _.copy(
-                    humanName  = humanName.getOrElse(user.humanName),
-                    username   = newName.getOrElse(user.username),
-                    password   = newPwd.getOrElse(user.password),
-                    lastUpdate = Instant.now
-                  )
-*/
                 )
                 .map(_.get)
                 .map(_.mapTo[User])
@@ -224,8 +216,43 @@ with Logging
         log.info(s"Handling User Roles update for User $id")
 
         for {
-          exists <- userDB.get(id)
+          userExists <- userDB.get(id)
+                      .map(_ mustBe defined otherwise (s"Invalid User $id"))
 
+          // Ensure Admin rights are not removed from last Admin user
+          notLastAdmin <-
+            if (!(roles contains Role.Admin))
+              userDB.filter(usr => (usr.roles contains Role.Admin) && usr.id != id)
+                .map( 
+                  adminUsers =>
+                    if (adminUsers.isEmpty)
+                      "Can't retract Admin rights from last Admin".invalidNel[Boolean]
+                    else
+                      true.validNel[String]
+                )
+            else Future.successful(true.validNel[String])
+
+          result <-
+            (userExists,notLastAdmin).mapN(
+              (_,_) =>
+                userDB.update(
+                  id,
+                  _.copy(
+                    roles      = roles,
+                    lastUpdate = Instant.now
+                  )
+                )
+                .map(_.get)
+                .map(_.mapTo[User])
+                .map(Updated(_))
+                .map(_.asRight[NonEmptyList[String]])
+            )
+            .fold(
+              errs => Future.successful(errs.asLeft[UserEvent]),
+              ok => ok
+            )
+
+/*
           result <- exists match {
             case Some(user) =>
               userDB.update(
@@ -242,8 +269,8 @@ with Logging
 
             case None =>
               Future.successful(NonEmptyList.one(s"Invalid User $id").asLeft[UserEvent])
-
           }
+*/
         } yield result
 
       }
@@ -290,6 +317,13 @@ with Logging
   }
 
 
+
+  import scala.collection.concurrent.{Map,TrieMap}
+
+  private val tmpUsers: Map[User.Id,User] =
+    TrieMap.empty[User.Id,User] 
+
+
   override def identify(
     username: User.Name,
     password: User.Password
@@ -303,25 +337,29 @@ with Logging
 
       case (User.Name("admin"),User.Password("admin")) => {
 
-        for {
+        (for {
           empty <- userDB.isEmpty
-          user = if (empty)
-            Some(
-              User(
-                userDB.newId,
-                username,
-                GivenName("Admin"),
-                FamilyName("istrator"),
-                User.Status.Active,
+          user =
+            if (empty)
+              Some(
+                User(
+                  userDB.newId,
+                  username,
+                  GivenName("Admin"),
+                  FamilyName("istrator"),
+                  User.Status.Active,
 //TODO: re-consider creating a temp user with ALL roles instead of just Admin
-//                Set(Role.Admin),
-                Role.values,   
-                LocalDate.now,
-                Instant.now
+                  Set(Role.Admin),
+//                  Role.values,   
+                  LocalDate.now,
+                  Instant.now
+                )
               )
-            )
             else None
-        } yield user
+        } yield user)
+          .andThen {
+            case Success(Some(usr)) => tmpUsers += (usr.id -> usr)
+          }
       }
 
       case _ => {
@@ -367,6 +405,7 @@ with Logging
     for {
       usr  <- userDB.get(id)
       user =  usr.map(_.mapTo[User])
+                .orElse(tmpUsers.get(id))
     } yield user
   }
 
