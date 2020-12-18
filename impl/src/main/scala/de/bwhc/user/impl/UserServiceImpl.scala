@@ -263,25 +263,6 @@ with Logging
                .map(_.asRight[NonEmptyList[String]])
             )
 
-/*
-          result <- exists match {
-            case Some(user) =>
-              userDB.update(
-                id,
-                _.copy(
-                  roles      = roles,
-                  lastUpdate = Instant.now
-                )
-              )
-              .map(_.get)
-              .map(_.mapTo[User])
-              .map(Updated(_))
-              .map(_.asRight[NonEmptyList[String]])
-
-            case None =>
-              Future.successful(NonEmptyList.one(s"Invalid User $id").asLeft[UserEvent])
-          }
-*/
         } yield result
 
       }
@@ -343,29 +324,30 @@ with Logging
 
       case (User.Name("admin"),User.Password("admin")) => {
 
-        (for {
-          empty <- userDB.isEmpty
-          user =
-            if (empty)
-              Some(
-                User(
-                  userDB.newId,
-                  username,
-                  GivenName("Admin"),
-                  FamilyName("istrator"),
-                  User.Status.Active,
-//TODO: re-consider creating a temp user with ALL roles instead of just Admin
-                  Set(Role.Admin),
-//                  Role.values,   
-                  LocalDate.now,
-                  Instant.now
+        val tmpUser =
+          for {
+            empty <- userDB.isEmpty
+            user =
+              if (empty)
+                Some(
+                  User(
+                    userDB.newId,
+                    username,
+                    GivenName("Admin"),
+                    FamilyName("istrator"),
+                    User.Status.Active,
+//TODO:   re-consider creating a temp user with ALL roles instead of just Admin
+                    Set(Role.Admin),
+                    LocalDate.now,
+                    Instant.now
+                  )
                 )
-              )
-            else None
-        } yield user)
-          .andThen {
-            case Success(Some(usr)) => tmpUsers += (usr.id -> usr)
-          }
+              else None
+          } yield user
+
+        tmpUser.andThen {
+          case Success(Some(usr)) => tmpUsers += (usr.id -> usr)
+        }
       }
 
       case _ => {
