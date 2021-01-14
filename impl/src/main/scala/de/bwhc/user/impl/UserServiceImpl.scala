@@ -161,10 +161,8 @@ with Logging
                 .map(_.asRight[NonEmptyList[String]])
             )
             .fold(
-              errs => Future.successful(errs.asLeft[UserEvent]),
-//              created => created
-              created =>
-                created.andThen { case Success(_) => tmpUsers.clear }
+              errs    => Future.successful(errs.asLeft[UserEvent]),
+              created => created.andThen { case Success(_) => tmpUsers.clear }
             )
         } yield result
       }
@@ -198,7 +196,7 @@ with Logging
                     newGivenName.fold(usr)(v => usr.copy(givenName = v)) |
                     (u => newFamilyName.fold(u)(v => u.copy(familyName = v))) |
                     (u => newName.fold(u)(v => u.copy(username = v))) |
-                    (u => newPwd.fold(u)(hn => u.copy(password = hn))) |
+                    (u => newPwd.fold(u)(v => u.copy(password = User.Password(MD5(v.value))))) |
                     (_.copy(lastUpdate = Instant.now))
                   }
                 )

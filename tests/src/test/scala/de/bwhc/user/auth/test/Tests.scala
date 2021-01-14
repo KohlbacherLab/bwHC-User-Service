@@ -35,22 +35,35 @@ class Tests extends AsyncFlatSpec
  
   
   lazy val userService = serviceLoad.get
-  
-  
-  val create =
-    Create(
-      User.Name("test_user"),
-      User.Password("""C|-|AnGe$1T"""),
-      GivenName("Ute"),
-      FamilyName("Musterfrau"),
-      Role.values
-    )
-  
+ 
+ 
+  val userName = User.Name("test_user")
+  val initPwd  = User.Password("ChAnGe1T!")
+  val newPwd   = User.Password("Te$ting1!")
 
-  "User creation" must "work" in {
+
+  "User creation with invalid Password" must "NOT have worked" in {
 
     for {
-      result   <- userService ! create
+      result <- userService ! Create(userName,User.Password("too-simple"),GivenName("Ute"),FamilyName("Musterfrau"),Role.values)
+    } yield result.isLeft mustBe true      
+
+  }
+
+
+  "Creation of non-Admin first User " must "NOT have worked" in {
+
+    for {
+      result <- userService ! Create(userName,initPwd,GivenName("Ute"),FamilyName("Musterfrau"),(Role.values - Role.Admin))
+    } yield result.isLeft mustBe true      
+
+  }
+  
+
+  "User creation" must "have worked" in {
+
+    for {
+      result   <- userService ! Create(userName,initPwd,GivenName("Ute"),FamilyName("Musterfrau"),Role.values)
       createOk =  result.isRight mustBe true      
       Created(newUser,_) = result.toOption.get
       user     <- userService.get(newUser.id)
@@ -61,43 +74,41 @@ class Tests extends AsyncFlatSpec
   }
 
   
-  "Duplicate User creation" must "NOT work" in {
+  "Duplicate User creation" must "NOT have worked" in {
 
     for {
-      result <- userService ! create
+      result   <- userService ! Create(userName,initPwd,GivenName("Ute"),FamilyName("Musterfrau"),Role.values)
       ok     =  result.isLeft mustBe true      
     } yield ok
 
   }
 
   
-/*
-  import SessionCommand._
-  import SessionEvent._
-
-  "User login and logout" must "work" in {
-
-    val login = Login(create.username,create.password)
+  "User login" must "have worked" in {
 
     for {
-      loginResult <- userService ! login 
-
-      loginOk =  loginResult.isRight mustBe true
-
-      LoggedIn(UserWithRoles(username,roles),token,_) = loginResult.toOption.get
-
-      userOk  = username mustBe create.username
-      rolesOk = roles    mustBe create.roles
-
-      logoutResult <- userService ! Logout(username)
-
-      logoutOk  = logoutResult.isRight mustBe true
-
-    } yield logoutOk
+      optUser <- userService.identify(userName,initPwd)     
+    } yield optUser mustBe defined 
 
   }
-*/
-  
+
+
+  "User update" must "have worked" in {
+
+    for {
+      user    <- userService.identify(userName,initPwd)     
+      usrId   =  user.value.id
+      updated <- userService ! Update(usrId,None,None,None,Some(newPwd))
+      ok      =  updated.isRight mustBe true
+
+      oldUser <- userService.identify(userName,initPwd)
+      pwdChanged = oldUser must not be defined
+      newUser <- userService.identify(userName,newPwd)
+      ok      = newUser mustBe defined
+    } yield ok 
+
+  }
+
 
 
 }
