@@ -246,12 +246,6 @@ with Logging
                     lastUpdate = Instant.now
                   )
                 )
-/*
-                .map(_.get)
-                .map(_.mapTo[User])
-                .map(Updated(_))
-                .map(_.asRight[NonEmptyList[String]])
-*/
             )
             .fold(
               errs => Future.successful(errs.asLeft[UserEvent]),
