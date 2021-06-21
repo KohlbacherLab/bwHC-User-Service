@@ -15,6 +15,7 @@ object Role extends Enumeration
   val GlobalZPMCoordinator = Value
   val MTBCoordinator       = Value
   val Researcher           = Value
+  val ApprovedResearcher   = Value
 
   implicit val format = Json.formatEnum(this)
 
