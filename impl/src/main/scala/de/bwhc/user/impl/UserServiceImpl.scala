@@ -138,7 +138,7 @@ with Logging
                             )
 
           // Ensure password meets complexity requirements
-          pwdOk      <- Future { pwd validate }
+          pwdOk      <- Future(validate(pwd))
 
           result     <-
             (usernameOk,adminEnsured,pwdOk).mapN(
@@ -179,13 +179,7 @@ with Logging
               .map(_ mustBe defined otherwise (s"Invalid User $id"))
           
           pwdOk <-
-            Future(
-              newPwd.fold(
-                Validated.validNel[String,Option[User.Password]](None)
-              )(
-                pwd => pwd.validate.map(Option(_))
-              )
-            )
+            Future( ifDefined(newPwd)(validate(_)) )
           
           result <-
             (userExists,pwdOk).mapN(
@@ -206,7 +200,11 @@ with Logging
                 .map(_.asRight[NonEmptyList[String]])
             )
             .fold(
-              errs => Future.successful(errs.asLeft[UserEvent]),
+//              errs => Future.successful(errs.asLeft[UserEvent]),
+              errs => { 
+                log.warn(s"User update failed: $errs")
+                Future.successful(errs.asLeft[UserEvent])
+              },
               updated => updated
             )
 

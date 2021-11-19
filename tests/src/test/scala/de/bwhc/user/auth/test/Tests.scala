@@ -17,6 +17,8 @@ class Tests extends AsyncFlatSpec
 
   val tmpDir = createTempDirectory("bwhc_user_test_data").toFile
 
+  tmpDir.deleteOnExit
+
   lazy val serviceLoad = UserService.getInstance
 
 
