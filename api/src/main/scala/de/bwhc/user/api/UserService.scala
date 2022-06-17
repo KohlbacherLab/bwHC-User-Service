@@ -19,7 +19,7 @@ import de.bwhc.util.spi._
 
 trait UserServiceProvider extends SPI[UserService]
 
-object UserService extends SPILoader(classOf[UserServiceProvider])
+object UserService extends SPILoader[UserServiceProvider]
 
 
 trait UserService

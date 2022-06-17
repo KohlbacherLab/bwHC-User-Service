@@ -200,7 +200,6 @@ with Logging
                 .map(_.asRight[NonEmptyList[String]])
             )
             .fold(
-//              errs => Future.successful(errs.asLeft[UserEvent]),
               errs => { 
                 log.warn(s"User update failed: $errs")
                 Future.successful(errs.asLeft[UserEvent])

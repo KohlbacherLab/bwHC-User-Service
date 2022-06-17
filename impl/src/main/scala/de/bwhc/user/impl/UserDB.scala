@@ -15,7 +15,7 @@ import de.bwhc.user.api.User
 
 trait UserDBProvider extends SPI[UserDB]
 
-object UserDB extends SPILoader(classOf[UserDBProvider])
+object UserDB extends SPILoader[UserDBProvider]
 
 
 trait UserDB
