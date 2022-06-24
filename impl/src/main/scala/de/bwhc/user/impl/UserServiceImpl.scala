@@ -162,7 +162,7 @@ with Logging
             )
             .fold(
               errs    => Future.successful(errs.asLeft[UserEvent]),
-              created => created.andThen { case Success(_) => tmpUsers.clear }
+              created => created.andThen { case Success(_) => tmpUsers.clear() }
             )
         } yield result
       }

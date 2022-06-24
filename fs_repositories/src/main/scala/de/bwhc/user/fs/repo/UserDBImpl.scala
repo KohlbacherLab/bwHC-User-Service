@@ -47,14 +47,15 @@ class UserDBImpl
 )
 extends UserDB
 {
-
+/*
   private val idPool =
     LazyList.continually(randomUUID.toString)
       .map(User.Id)
       .iterator
-
-
   def newId: User.Id = idPool.next
+*/
+
+  def newId: User.Id = User.Id(randomUUID.toString)
 
 
   def save(
