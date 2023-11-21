@@ -66,6 +66,14 @@ object UserCommand
     password:  Option[User.Password],
   ) extends UserCommand
 
+  final case class ChangePassword
+  (
+    id:        User.Id,
+    currentPassword: User.Password,
+    newPassword1: User.Password,
+    newPassword2: User.Password
+  ) extends UserCommand
+
   final case class UpdateRoles
   (
     id:    User.Id,
@@ -80,6 +88,7 @@ object UserCommand
 
   implicit val formatCreate      = Json.format[Create]
   implicit val formatUpdate      = Json.format[Update]
+  implicit val formatChangePassword = Json.format[ChangePassword]
   implicit val formatUpdateRoles = Json.format[UpdateRoles]
   implicit val formatDelete      = Json.format[Delete]
 

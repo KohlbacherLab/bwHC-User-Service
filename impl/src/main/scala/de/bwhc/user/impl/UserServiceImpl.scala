@@ -22,7 +22,6 @@ import cats.data.{
   NonEmptyList
 }
 import cats.syntax.either._
-
 import de.bwhc.util.Logging
 import de.bwhc.util.data.Validation._
 import de.bwhc.util.data.Validation.dsl._
@@ -82,7 +81,8 @@ with Logging
   import UserServiceImpl._
 
 
-  implicit val UserwithPasswordToUser = deriveMapping[UserWithPassword,User]
+  implicit val UserwithPasswordToUser =
+    deriveMapping[UserWithPassword,User]
 
 
   import scala.collection.concurrent.{Map,TrieMap}
@@ -210,6 +210,57 @@ with Logging
         } yield result
 
       }
+
+      //-----------------------------------------------------------------------
+      case ChangePassword(id,current,new1,new2) => {
+
+        log.info(s"Handling password change request for User ${id.value}")
+
+        for {
+          userOk <-
+            userDB.get(id)
+              .map(
+                _ mustBe defined otherwise (s"Invalid User $id") andThen (
+                  opt =>
+                    opt match {
+                      case Some(user) if user.password == User.Password(MD5(current.value)) =>
+                        user.validNel[String]
+                      case _ =>
+                        "Invalid current password".invalidNel[User]
+                    }
+                )
+              )
+
+          pwdsMatch <-
+            Future(
+              new1 must equal (new2) otherwise (
+                "Password entries 1 and 2 are not equal"
+              ) andThen (validate(_))
+            )
+
+          result <-    
+            (userOk,pwdsMatch).mapN(
+              (_,_) =>
+                userDB.update(
+                  id,
+                  _.copy(
+                    password   = new1.copy(value = MD5(new1.value)),
+                    lastUpdate = Instant.now
+                  )
+                )
+            )
+            .fold(
+              errs => Future.successful(errs.asLeft[UserEvent]),
+              _.map(_.get)
+               .map(_.mapTo[User])
+               .map(Updated(_))
+               .map(_.asRight[NonEmptyList[String]])
+            )
+
+        } yield result
+
+      }
+
 
       //-----------------------------------------------------------------------
       case UpdateRoles(id,roles) => {

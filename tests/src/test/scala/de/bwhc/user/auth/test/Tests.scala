@@ -41,7 +41,7 @@ class Tests extends AsyncFlatSpec
  
   val userName = User.Name("test_user")
   val initPwd  = User.Password("ChAnGe1T!")
-  val newPwd   = User.Password("Te$ting1!")
+  val nextPwd  = User.Password("Te$ting1!")
 
 
   "User creation with invalid Password" must "NOT have worked" in {
@@ -100,17 +100,56 @@ class Tests extends AsyncFlatSpec
     for {
       user    <- userService.identify(userName,initPwd)     
       usrId   =  user.value.id
-      updated <- userService ! Update(usrId,None,None,None,Some(newPwd))
+      updated <- userService ! Update(usrId,None,None,None,Some(nextPwd))
       ok      =  updated.isRight mustBe true
 
       oldUser <- userService.identify(userName,initPwd)
       pwdChanged = oldUser must not be defined
-      newUser <- userService.identify(userName,newPwd)
+      newUser <- userService.identify(userName,nextPwd)
       ok      = newUser mustBe defined
     } yield ok 
 
   }
 
+
+  "Password change" must "have worked" in {
+
+    for {
+      user <- userService.identify(userName,nextPwd)
+
+      updated <-
+        userService ! ChangePassword(
+          id = user.get.id,
+          currentPassword = nextPwd,
+          newPassword1 = initPwd,
+          newPassword2 = initPwd
+        )
+
+      changed = updated.isRight mustBe true
+
+      changedUser <- userService.identify(userName,initPwd)
+
+    } yield changedUser mustBe defined
+
+  }
+
+
+  it must "have failed" in {
+
+    for {
+      user <- userService.identify(userName,initPwd)
+
+      updated <-
+        userService ! ChangePassword(
+          id = user.get.id,
+          currentPassword = initPwd,
+          newPassword1 = User.Password("Te$ting1!"),
+          newPassword2 = User.Password("Te$ting2!"),
+        )
+
+    } yield updated.isLeft mustBe true
+
+  }
 
 
 }
