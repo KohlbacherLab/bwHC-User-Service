@@ -34,7 +34,6 @@ lazy val util = project
     name := "util",
     settings,
     libraryDependencies ++= Seq(
-      dependencies.slf4j,
       dependencies.play_json
     )
   )
@@ -78,7 +77,6 @@ lazy val tests = project
     settings,
     libraryDependencies ++= Seq(
       dependencies.scalatest,
-//      dependencies.slf4j
     ),
     publish / skip := true
   )
@@ -96,7 +94,6 @@ lazy val tests = project
 lazy val dependencies =
   new {
     val scalatest   = "org.scalatest"     %% "scalatest"               % "3.1.1" % Test
-    val slf4j       = "org.slf4j"         %  "slf4j-api"               % "1.7.32"
     val cats_core   = "org.typelevel"     %% "cats-core"               % "2.1.1"
     val play_json   = "com.typesafe.play" %% "play-json"               % "2.8.1"
     val bwhc_utils  = "de.bwhc"           %% "utils"                   % "1.1"
